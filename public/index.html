@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat App</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+        }
+
+        #chat-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            max-width: 600px;
+            height: 90vh;
+            margin: 2rem auto;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            background-color: #ffffff;
+            overflow: hidden;
+        }
+
+        #messages {
+            padding: 1rem;
+            height: 80vh;
+            overflow-y: scroll;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #message-input {
+            display: flex;
+            padding: 1rem;
+            border-top: 1px solid #ccc;
+            background-color: #fff;
+        }
+
+        #message {
+            flex: 1;
+            padding: 10px;
+            font-size: 16px;
+            border: 1px solid #ccc;
+            border-radius: 20px;
+            margin-right: 10px;
+        }
+
+        #sendBtn {
+            background-color: #25D366;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            border-radius: 20px;
+            cursor: pointer;
+        }
+
+        #sendBtn:hover {
+            background-color: #1cc74a;
+        }
+
+        .message {
+            padding: 10px 15px;
+            margin: 5px 0;
+            border-radius: 20px;
+            max-width: 60%;
+        }
+
+        .sent {
+            align-self: flex-end;
+            background-color: #DCF8C6;
+        }
+
+        .received {
+            align-self: flex-start;
+            background-color: #fff;
+            border: 1px solid #ddd;
+        }
+
+        /* Add a scrollbar style */
+        #messages::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #messages::-webkit-scrollbar-thumb {
+            background-color: #ccc;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="chat-container">
+        <div id="messages"></div>
+        <div id="message-input">
+            <input type="text" id="message" placeholder="Write a message"/>
+            <button id="sendBtn">Send</button>
+        </div>
+    </div>
+    
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+        const sendBtn = document.getElementById('sendBtn');
+        const messageInput = document.getElementById('message');
+        const messages = document.getElementById('messages');
+    
+        // Generate a unique ID for each tab (per user session)
+        const userId = 'user_' + Math.random().toString(36).substr(2, 9);
+    
+        // Receiving message from the server
+        socket.on('message', (data) => {
+            const { message, senderId } = data;
+    
+            const p = document.createElement('p');
+            p.innerText = message;
+    
+            // Check if the message was sent by this tab's userId
+            if (senderId === userId) {
+                p.classList.add('message', 'sent'); // Sent message (right side)
+            } else {
+                p.classList.add('message', 'received'); // Received message (left side)
+            }
+    
+            messages.appendChild(p);
+            messages.scrollTop = messages.scrollHeight; // Scroll to bottom
+        });
+    
+        // Function to send the message
+        const sendMessage = () => {
+            const message = messageInput.value;
+            if (message.trim()) {
+                // Emit the message to the server with the user's unique ID
+                socket.emit('message', { message, senderId: userId });
+    
+                // Clear the input field
+                messageInput.value = '';
+                messages.scrollTop = messages.scrollHeight; // Scroll to bottom
+            }
+        };
+    
+        // Sending message by clicking the Send button
+        sendBtn.addEventListener('click', sendMessage);
+    
+        // Sending message by pressing Enter key
+        messageInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+    </script>
+    
+    
+</body>
+</html>
